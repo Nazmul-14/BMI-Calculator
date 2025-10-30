@@ -25,33 +25,49 @@ class _BmiCalculatorState extends State<BmiCalculator> {
   String? catagory;
 
 
-  String catagoryresult(double bmi){
-    if(bmi<18.5){
+  String catagoryresult(double bmi) {
+    if (bmi < 18.5) {
       return "Underweight";
-    }
-    else if(bmi>18.5 && bmi<24.9){
+    } else if (bmi >= 18.5 && bmi < 25.0) {
       return "Healthy Weight";
-    }
-    else if(bmi>24.9 && bmi<29.9){
+    } else if (bmi >= 25.0 && bmi < 30.0) {
       return "Overweight";
-    }
-    else if(bmi>29.9 && bmi<34.9){
+    } else if (bmi >= 30.0 && bmi < 35.0) {
       return "Obese (Class I)";
-    }
-    else if(bmi>34.9 && bmi<39.9){
+    } else if (bmi >= 35.0 && bmi < 40.0) {
       return "Obese (Class II)";
-    }else{
+    } else {
       return "Obese (Class III)";
     }
   }
 
+
+  String bmiRange(String category) {
+    if (category == "Underweight") {
+      return "Below 18.5";
+    } else if (category == "Healthy Weight") {
+      return "18.5 – 24.9";
+    } else if (category == "Overweight") {
+      return "25.0 – 29.9";
+    } else if (category == "Obese (Class I)") {
+      return "30.0 – 34.9";
+    } else if (category == "Obese (Class II)") {
+      return "35.0 – 39.9";
+    } else if (category == "Obese (Class III)") {
+      return "40.0 or above";
+    } else {
+      return "";
+    }
+  }
+
+
   final Map<String, Color> catagorycolor={
-    'Underweight' : Colors.blue,
-    'Healthy Weight' : Colors.green,
-    'Overweight' : Colors.orange,
-    'Obese (Class I)' : Colors.red,
-    'Obese (Class II)' : Colors.red,
-    'Obese (Class III)' : Colors.red,
+    'Underweight' : ?Colors.blue[300],
+    'Healthy Weight' : ?Colors.green[300],
+    'Overweight' : ?Colors.orange[300],
+    'Obese (Class I)' : ?Colors.red[300],
+    'Obese (Class II)' : ?Colors.red[300],
+    'Obese (Class III)' : ?Colors.red[300],
   };
 
   double? cmtom() {
@@ -81,9 +97,9 @@ class _BmiCalculatorState extends State<BmiCalculator> {
 
   double? feetinctom(){
     var feet = double.tryParse(feetctr.text.trim());
-    var inch = double.tryParse(inchctr.text.trim());
+    var inch = double.tryParse(inchctr.text.trim()) ?? 0;
 
-    if(feet == null || feet<=0 || inch == null ||inch<=0){
+    if(feet == null || feet<=0 ||inch<0){
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Invalid input')));
       return null;
     }
@@ -307,8 +323,6 @@ class _BmiCalculatorState extends State<BmiCalculator> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 16,),
-
                     if(heighttype==Heighttype.cm)...[
                       SizedBox(height: 16,),
                       TextField(
@@ -409,6 +423,16 @@ class _BmiCalculatorState extends State<BmiCalculator> {
                         ElevatedButton(onPressed: (){
                           setState(() {
                             selectedbutton2=1;
+                            if(heighttype==Heighttype.feetInch){
+                              final ft= double.tryParse(feetctr.text.trim());
+                              final ih= double.tryParse(inchctr.text.trim()) ?? 0;
+
+                              if(ft!=null && ft>0 && ih>=0){
+                                final totalin=(ft*12)+ih;
+                                final cm= totalin*2.54;
+                                cmctr.text=cm.toStringAsFixed(2);
+                              }
+                            }
                             heighttype = Heighttype.cm;
                           });
                         },
@@ -423,6 +447,16 @@ class _BmiCalculatorState extends State<BmiCalculator> {
                             child: Text('Cm')),
                         ElevatedButton(onPressed: (){
                           setState(() {
+                            if(heighttype==Heighttype.cm){
+                              final cm= double.tryParse(cmctr.text.trim());
+                              if(cm!=null){
+                                final totalinch= cm/2.54;
+                                final ft= totalinch ~/12;
+                                final inch= totalinch%12;
+                                feetctr.text=ft.toString();
+                                inchctr.text=inch.toString();
+                              }
+                            }
                             selectedbutton2=2;
                             heighttype = Heighttype.feetInch;
                           });
@@ -509,18 +543,21 @@ class _BmiCalculatorState extends State<BmiCalculator> {
           SizedBox(height: 16,),
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-                onPressed: _calculator,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-               ),
-                child: Text('Calculate BMI',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurpleAccent[300],
-              ),
-            )),
+            child: SizedBox(
+              width: 200,
+              child: ElevatedButton(
+                  onPressed: _calculator,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[300],
+                 ),
+                  child: Text('Calculate Your BMI',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurpleAccent[300],
+                ),
+              )),
+            ),
 
           ),
           SizedBox(height: 16,),
@@ -530,16 +567,32 @@ class _BmiCalculatorState extends State<BmiCalculator> {
               child: Column(
                 children: [
                   Text(
-                    'Your BMI: $_bmiresult',
+                    'YOUR BMI IS: $_bmiresult',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 10),
                   Chip(
-                    label: Text(
-                      catagory ?? '',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    label: Column(
+                      children: [
+                        Text(
+                          catagory ?? '',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        Text(
+                          'Range: ${bmiRange (catagory ?? '')}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ],
                     ),
-                    backgroundColor: catagorycolor[catagory] ?? Colors.grey,
+                    backgroundColor: catagorycolor[catagory] ?? Colors.grey[200],
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ],
